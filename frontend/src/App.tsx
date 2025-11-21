@@ -3,11 +3,13 @@ import { SearchBar } from './components/SearchBar';
 import { ProductGrid } from './components/ProductGrid';
 
 export interface AutoPart {
-  id: string;
-  name: string;
+  part_number: number;
+  part_name: string;
   price: number;
-  image_url: string;
+  img_url: string;
 }
+
+
 
 export default function App() {
   const [parts, setParts] = useState<AutoPart[]>([]);
@@ -19,17 +21,13 @@ export default function App() {
     setError(null);
 
     try {
-      // TODO: Replace with your actual API endpoint
-      // Example: const response = await fetch(`https://your-api.com/api/parts?search=${encodeURIComponent(searchTerm)}`);
       
       const response = await fetch(
-        `https://your-api-endpoint.com/api/parts?search=${encodeURIComponent(searchTerm)}`,
+        `http://localhost:3001/api/parts?search=${encodeURIComponent(searchTerm)}`,
         {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            // Add your authentication headers here if needed
-            // 'Authorization': 'Bearer YOUR_API_KEY',
           },
         }
       );
@@ -55,59 +53,59 @@ export default function App() {
     // Mock data for demonstration
     const mockParts: AutoPart[] = [
       {
-        id: '1',
-        name: 'Brake Pad Set',
+        part_number: 1,
+        part_name: 'Brake Pad Set',
         price: 89.99,
-        image_url: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=400&h=400&fit=crop',
+        img_url: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=400&h=400&fit=crop',
       },
       {
-        id: '2',
-        name: 'Oil Filter',
+        part_number: 2,
+        part_name: 'Oil Filter',
         price: 24.99,
-        image_url: 'https://images.unsplash.com/photo-1625047509168-a7026f36de04?w=400&h=400&fit=crop',
+        img_url: 'https://images.unsplash.com/photo-1625047509168-a7026f36de04?w=400&h=400&fit=crop',
       },
       {
-        id: '3',
-        name: 'Air Filter',
+        part_number: 3,
+        part_name: 'Air Filter',
         price: 34.99,
-        image_url: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400&h=400&fit=crop',
+        img_url: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400&h=400&fit=crop',
       },
       {
-        id: '4',
-        name: 'Spark Plugs',
+        part_number: 4,
+        part_name: 'Spark Plugs',
         price: 45.99,
-        image_url: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=400&h=400&fit=crop',
+        img_url: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=400&h=400&fit=crop',
       },
       {
-        id: '5',
-        name: 'Battery',
+        part_number: 5,
+        part_name: 'Battery',
         price: 159.99,
-        image_url: 'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=400&h=400&fit=crop',
+        img_url: 'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=400&h=400&fit=crop',
       },
       {
-        id: '6',
-        name: 'Alternator',
+        part_number: 6,
+        part_name: 'Alternator',
         price: 249.99,
-        image_url: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=400&h=400&fit=crop',
+        img_url: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=400&h=400&fit=crop',
       },
       {
-        id: '7',
-        name: 'Radiator',
+        part_number: 7,
+        part_name: 'Radiator',
         price: 199.99,
-        image_url: 'https://images.unsplash.com/photo-1627074476370-c0e0f2229d2e?w=400&h=400&fit=crop',
+        img_url: 'https://images.unsplash.com/photo-1627074476370-c0e0f2229d2e?w=400&h=400&fit=crop',
       },
       {
-        id: '8',
-        name: 'Shock Absorbers',
+        part_number: 8,
+        part_name: 'Shock Absorbers',
         price: 129.99,
-        image_url: 'https://images.unsplash.com/photo-1449130015084-2fe954b75e4d?w=400&h=400&fit=crop',
+        img_url: 'https://images.unsplash.com/photo-1449130015084-2fe954b75e4d?w=400&h=400&fit=crop',
       },
     ];
 
     // Filter mock data based on search term
     if (searchTerm) {
       const filtered = mockParts.filter(part =>
-        part.name.toLowerCase().includes(searchTerm.toLowerCase())
+        part.part_name.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setParts(filtered);
     } else {

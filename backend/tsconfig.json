@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",                     // Modern JS output
+    "module": "commonjs",                   // Node-friendly modules
+    "esModuleInterop": true,                // Allows default imports from CommonJS modules like express/cors
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,                         // Enable all strict type checks
+    "skipLibCheck": true,                   // Skip type checks for node_modules
+    "outDir": "dist",                        // Compiled JS goes here
+    "rootDir": ".",                          // Base directory for input files
+    "resolveJsonModule": true,               // Allows importing JSON files
+    "noImplicitAny": true,                   // Prevents untyped variables
+    "moduleResolution": "node"              // Node module resolution strategy
+  },
+  "include": ["./**/*.ts"],                 // Include all TS files in backend folder
+  "exclude": ["node_modules", "dist"]       // Exclude dependencies and build output
+}
