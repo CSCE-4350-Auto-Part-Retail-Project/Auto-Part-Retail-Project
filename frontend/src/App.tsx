@@ -24,10 +24,12 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isCatalogueOpen, setIsCatalogueOpen] = useState(false);
 
   const handleSearch = async (searchTerm: string) => {
     setLoading(true);
     setError(null);
+    setIsCatalogueOpen(false); // close catalogue if searching
 
     try {
       const response = await fetch(
@@ -46,6 +48,39 @@ export default function App() {
       console.error('Error fetching parts:', err);
       setError('Failed to load auto parts. Showing mock data for demonstration.');
       loadMockData(searchTerm);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Catalogue toggle
+  const handleCatalogue = async () => {
+    // If catalogue is already open, close it and clear results
+    if (isCatalogueOpen) {
+      setIsCatalogueOpen(false);
+      setParts([]);
+      setError(null);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${API_BASE}/api/parts`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch parts');
+
+      const data = await response.json();
+      setParts(data);
+      setIsCatalogueOpen(true);
+    } catch (err) {
+      console.error('Error fetching catalogue:', err);
+      setError('Failed to load full catalogue.');
+      setIsCatalogueOpen(false);
     } finally {
       setLoading(false);
     }
@@ -134,7 +169,23 @@ export default function App() {
             <p className="text-slate-600">Search for auto parts and add them to your order</p>
           </header>
 
-          <SearchBar onSearch={handleSearch} loading={loading} />
+          {/* Search and Catalogue row */
+          <div className="max-w-2xl mx-auto mb-4">
+            <SearchBar onSearch={handleSearch} loading={loading} />
+          </div>
+
+          {/* Catalogue button row */}
+          <div className="flex justify-center mb-8">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={loading}
+              onClick={handleCatalogue}
+              className="px-3 py-1 text-sm"
+            >
+              {loading && !isCatalogueOpen ? 'Loading…' : 'Catalogue'}
+            </Button>
+          </div>
 
           {error && (
             <div className="mx-auto mb-8 max-w-2xl rounded-lg bg-yellow-50 border border-yellow-200 p-4">

@@ -1,7 +1,7 @@
 // server.ts
 import express from 'express';
 import cors from 'cors';
-import { QueryForPart } from './queries';
+import { QueryForPart, QueryAllParts } from './queries';
 
 const app = express();
 
@@ -11,10 +11,19 @@ app.use(express.json());
 
 // API route your React app will hit
 app.get('/api/parts', async (req, res) => {
-  const search = req.query.search as string;
+  const search = (req.query.search as string) || '';
 
   try {
-    const results = await QueryForPart(search);
+    let results;
+
+    if (!search.trim()) {
+      // No search term → return ALL parts
+      results = await QueryAllParts();
+    } else {
+      // Search term → filtered search
+      results = await QueryForPart(search);
+    }
+
     res.json(results);
   } catch (err) {
     console.error('Error fetching parts:', err);

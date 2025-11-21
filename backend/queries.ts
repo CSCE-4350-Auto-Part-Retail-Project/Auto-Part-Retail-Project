@@ -36,3 +36,27 @@ export async function QueryForPart(searchTerm: string): Promise<AutoPart[]> {
   }
 }
 
+//query all parts
+export async function QueryAllParts(): Promise<AutoPart[]> {
+  const client = await pool.connect();
+  try {
+    const result = await client.query(`
+      SELECT 
+        part_number,
+        part_name,
+        (price::numeric)::float AS price,
+        img_url
+      FROM parts
+      ORDER BY part_name;
+    `);
+
+    return result.rows.map((row) => ({
+      part_number: row.part_number,
+      part_name: row.part_name,
+      price: row.price,
+      img_url: row.img_url,
+    }));
+  } finally {
+    client.release();
+  }
+}
