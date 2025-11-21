@@ -169,7 +169,7 @@ export default function App() {
             <p className="text-slate-600">Search for auto parts and add them to your order</p>
           </header>
 
-          {/* Search and Catalogue row */
+          {/* Search and Catalogue row */}
           <div className="max-w-2xl mx-auto mb-4">
             <SearchBar onSearch={handleSearch} loading={loading} />
           </div>
