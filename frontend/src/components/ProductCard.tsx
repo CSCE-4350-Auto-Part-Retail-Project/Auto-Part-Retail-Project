@@ -14,6 +14,7 @@ export function ProductCard({ part }: ProductCardProps) {
         <ImageWithFallback
           src={part.img_url}
           alt={part.part_name}
+          loading="lazy"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
       </div>
