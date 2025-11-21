@@ -12,29 +12,27 @@ export interface AutoPart {
 export async function QueryForPart(searchTerm: string): Promise<AutoPart[]> {
   const client = await pool.connect();
   try {
-    const result = await client.query(
-      `
+    const isNumeric = !isNaN(Number(searchTerm)); // check if searchTerm is a number
+    const query = `
       SELECT
-        part_number AS part_number,
-        part_name AS part_name,
+        part_number,
+        part_name,
         (price::numeric)::float AS price,
         img_url
       FROM parts
       WHERE part_name ILIKE $1
-      `,
-      [`%${searchTerm}%`]
-    );
+      ${isNumeric ? 'OR part_number = $2' : ''}
+    `;
 
-    // Ensure JS types
-    const parts: AutoPart[] = result.rows.map(row => ({
-      part_number: row.part_number,
-      part_name: row.part_name,
-      price: Number(row.price), // safe conversion to number
-      img_url: row.img_url,
-    }));
+    const params = isNumeric ? [`%${searchTerm}%`, Number(searchTerm)] : [`%${searchTerm}%`];
 
-    return parts;
+    const result = await client.query(query, params);
+    return result.rows;
+  } catch (err) {
+    console.error('Error fetching parts:', err);
+    return [];
   } finally {
     client.release();
   }
 }
+

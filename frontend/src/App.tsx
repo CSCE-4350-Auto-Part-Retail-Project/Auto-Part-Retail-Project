@@ -9,6 +9,7 @@ export interface AutoPart {
   img_url: string;
 }
 
+const API_BASE = `${window.location.protocol}//${window.location.hostname}:3001`;
 
 
 export default function App() {
@@ -23,7 +24,7 @@ export default function App() {
     try {
       
       const response = await fetch(
-        `http://localhost:3001/api/parts?search=${encodeURIComponent(searchTerm)}`,
+        `${API_BASE}/api/parts?search=${encodeURIComponent(searchTerm)}`,
         {
           method: 'GET',
           headers: {
