@@ -5,9 +5,10 @@ import { Skeleton } from './ui/skeleton';
 interface ProductGridProps {
   parts: AutoPart[];
   loading: boolean;
+  onAddToCart: (part: AutoPart) => void;
 }
 
-export function ProductGrid({ parts, loading }: ProductGridProps) {
+export function ProductGrid({ parts, loading, onAddToCart }: ProductGridProps) {
   if (loading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -33,7 +34,7 @@ export function ProductGrid({ parts, loading }: ProductGridProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {parts.map((part) => (
-        <ProductCard key={part.part_number} part={part} />
+        <ProductCard key={part.part_number} part={part} onAddToCart={onAddToCart} />
       ))}
     </div>
   );
