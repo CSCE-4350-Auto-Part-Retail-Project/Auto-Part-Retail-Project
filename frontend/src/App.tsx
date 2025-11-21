@@ -23,7 +23,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [isCartOpen, setIsCartOpen] = useState(false); // Keep this
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   const handleSearch = async (searchTerm: string) => {
     setLoading(true);
@@ -71,15 +71,23 @@ export default function App() {
   };
 
   const addToCart = (part: AutoPart) => {
-    setCart((prev) => {
-      const existing = prev.find((item) => item.part_number === part.part_number);
-      if (existing) return prev.map((item) => item.part_number === part.part_number ? { ...item, quantity: item.quantity + 1 } : item);
-      return [...prev, { ...part, quantity: 1 }];
+    setCart((prevCart) => {
+      const existingItem = prevCart.find((item) => item.part_number === part.part_number);
+      
+      if (existingItem) {
+        return prevCart.map((item) =>
+          item.part_number === part.part_number
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      
+      return [...prevCart, { ...part, quantity: 1 }];
     });
   };
 
   const removeFromCart = (partId: number) => {
-    setCart((prev) => prev.filter((item) => item.part_number !== partId));
+    setCart((prevCart) => prevCart.filter((item) => item.part_number !== partId));
   };
 
   const updateQuantity = (partId: number, quantity: number) => {
@@ -87,8 +95,11 @@ export default function App() {
       removeFromCart(partId);
       return;
     }
-    setCart((prev) =>
-      prev.map((item) => (item.part_number === partId ? { ...item, quantity } : item))
+    
+    setCart((prevCart) =>
+      prevCart.map((item) =>
+        item.part_number === partId ? { ...item, quantity } : item
+      )
     );
   };
 
@@ -103,11 +114,12 @@ export default function App() {
               <div className="flex-1"></div>
               <h1 className="flex-1 text-slate-900">Auto Parts Search</h1>
               <div className="flex-1 flex justify-end">
-                {/* Cart button */}
                 <Button
                   variant="outline"
                   size="lg"
-                  onClick={() => setIsCartOpen(true)}
+                  onClick={() => {
+                    setIsCartOpen(true);
+                  }}
                   className="relative"
                 >
                   <ShoppingCart className="size-5" />
@@ -123,24 +135,27 @@ export default function App() {
           </header>
 
           <SearchBar onSearch={handleSearch} loading={loading} />
+
           {error && (
             <div className="mx-auto mb-8 max-w-2xl rounded-lg bg-yellow-50 border border-yellow-200 p-4">
               <p className="text-yellow-800">{error}</p>
               <p className="text-yellow-700 mt-2">Showing mock data for demonstration.</p>
             </div>
           )}
+
           <ProductGrid parts={parts} loading={loading} onAddToCart={addToCart} />
         </div>
       </div>
-
-      {/* Cart Drawer */}
-      <Cart
-        items={cart}
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-        onRemove={removeFromCart}
-        onUpdateQuantity={updateQuantity}
-      />
+      
+      {isCartOpen && (
+        <Cart
+          items={cart}
+          isOpen={isCartOpen}
+          onClose={() => setIsCartOpen(false)}
+          onRemove={removeFromCart}
+          onUpdateQuantity={updateQuantity}
+        />
+      )}
     </>
   );
 }
