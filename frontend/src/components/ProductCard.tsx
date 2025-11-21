@@ -12,13 +12,13 @@ export function ProductCard({ part }: ProductCardProps) {
     <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
       <div className="aspect-square overflow-hidden bg-slate-100">
         <ImageWithFallback
-          src={part.image_url}
-          alt={part.name}
+          src={part.img_url}
+          alt={part.part_name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
       </div>
       <div className="p-4">
-        <h3 className="text-slate-900 mb-2 line-clamp-2">{part.name}</h3>
+        <h3 className="text-slate-900 mb-2 line-clamp-2">{part.part_name}</h3>
         <div className="flex items-center justify-between">
           <p className="text-blue-600">${part.price.toFixed(2)}</p>
           <Button size="sm" variant="outline" className="gap-2">

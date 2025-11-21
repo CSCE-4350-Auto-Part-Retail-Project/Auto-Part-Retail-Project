@@ -1,5 +1,5 @@
 
-  # Auto Parts Image Gallery
+  # Auto Parts Search
 
   This is a code bundle for Auto Parts Image Gallery. The original project is available at https://www.figma.com/design/XnFi1vPcmd1xrRnQHtxcrS/Auto-Parts-Image-Gallery.
 
