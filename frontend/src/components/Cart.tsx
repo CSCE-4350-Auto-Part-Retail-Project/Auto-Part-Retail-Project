@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { CartItem } from '../App';
 import { X, Minus, Plus, Trash2 } from 'lucide-react';
 import { Button } from './ui/button';
@@ -9,6 +10,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from './ui/sheet';
+import { Checkout, PaymentData } from "./Checkout";
 
 interface CartProps {
   items: CartItem[];
@@ -19,6 +21,7 @@ interface CartProps {
 }
 
 export function Cart({ items, isOpen, onClose, onRemove, onUpdateQuantity }: CartProps) {
+  const [showCheckout, setShowCheckout] = useState(false);
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const tax = subtotal * 0.08; // 8% tax
   const total = subtotal + tax;
@@ -116,9 +119,41 @@ export function Cart({ items, isOpen, onClose, onRemove, onUpdateQuantity }: Car
                 <span>${total.toFixed(2)}</span>
               </div>
             </div>
-            <Button className="w-full" size="lg">
+            <Button
+              className="w-full"
+              size="lg"
+              onClick={() => setShowCheckout(true)}
+            >
               Proceed to Checkout
             </Button>
+
+            {showCheckout && (
+              <Checkout
+                totalAmount={total}
+                onComplete={async (payment: PaymentData) => {
+                  try {
+                    const response = await fetch(`${API_BASE}/api/checkout`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(payment),
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                      console.log('Payment successfully saved to backend:', data);
+                    } else {
+                      console.error('Payment failed on server:', data);
+                    }
+                  } catch (err) {
+                    console.error('Error sending payment to backend:', err);
+                  } finally {
+                    setShowCheckout(false);
+                    onClose();
+                  }
+                }}
+
+              />
+            )}
           </div>
         )}
       </SheetContent>
