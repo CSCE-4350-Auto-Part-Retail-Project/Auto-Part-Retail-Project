@@ -8,7 +8,7 @@ import ManageEmployees from './components/ManageEmployees';
 import ManageParts from './components/ManageParts';
 import ManageOrders from './components/ManageOrders';
 import ManageReports from './components/ManageReports';
-
+import DelivManage from './components/DelivManage';
 
 
 export interface AutoPart {
@@ -590,17 +590,8 @@ export default function App() {
 
               {employeeSection === 'reports' && <ManageReports />}
 
-              {employeeSection === 'delivery' && (
-                <div>
-                  <h2 className="text-xl font-semibold text-slate-900 mb-2">
-                    Delivery Management
-                  </h2>
-                  <p className="text-sm text-slate-600">
-                    Here you will be able to track order dates, delivery dates,
-                    payment methods, and cancellations.
-                  </p>
-                </div>
-              )}
+              {employeeSection === 'delivery' && <DelivManage />}
+
             </main>
           </div>
         </div>
