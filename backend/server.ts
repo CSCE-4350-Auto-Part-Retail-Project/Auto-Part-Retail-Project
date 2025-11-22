@@ -6,8 +6,9 @@ import {
   QueryAllParts,
   findCustomerByCredentials,
   findEmployeeByCredentials,
-  createCustomer
+  createCustomer,
 } from './queries';
+import pool from './database';
 
 const app = express();
 
@@ -20,7 +21,9 @@ app.post('/api/login', async (req, res) => {
   const { username, password, mode } = req.body;
 
   if (!username || !password) {
-    return res.status(400).json({ message: 'Username and password are required.' });
+    return res
+      .status(400)
+      .json({ message: 'Username and password are required.' });
   }
 
   const loginMode = mode === 'employee' ? 'employee' : 'customer';
@@ -42,7 +45,7 @@ app.post('/api/login', async (req, res) => {
       username: user.username,
       displayName: user.customer_name || user.employee_name,
       role: loginMode,
-      employeeRole: user.employee_role || null
+      employeeRole: user.employee_role || null,
     });
   } catch (err) {
     console.error('Login error:', err);
@@ -103,7 +106,6 @@ app.post('/api/customers', async (req, res) => {
   }
 });
 
-
 // API route your React app will hit
 app.get('/api/parts', async (req, res) => {
   const search = (req.query.search as string) || '';
@@ -123,6 +125,119 @@ app.get('/api/parts', async (req, res) => {
   } catch (err) {
     console.error('Error fetching parts:', err);
     res.status(500).json({ error: 'Database query failed' });
+  }
+});
+
+app.get('/api/employees', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT employee_id, employee_name, employee_role, username
+       FROM employee
+       ORDER BY employee_id`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching employees:', err);
+    res.status(500).json({ message: 'Failed to load employees.' });
+  }
+});
+
+app.post('/api/employees', async (req, res) => {
+  const { employee_name, employee_role, username, password } = req.body;
+
+  if (!employee_name || !username || !password) {
+    return res.status(400).json({
+      message: 'employee_name, username, and password are required.',
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO employee (employee_name, employee_role, username, password)
+       VALUES ($1, $2, $3, $4)
+       RETURNING employee_id, employee_name, employee_role, username`,
+      [employee_name, employee_role, username, password]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (err: any) {
+    console.error('Error creating employee:', err);
+
+    if (err.code === '23505') {
+      return res.status(400).json({ message: 'Username already exists.' });
+    }
+
+    res.status(500).json({ message: 'Failed to create employee.' });
+  }
+});
+
+app.put('/api/employees/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  const { employee_name, employee_role, username, password } = req.body;
+
+  if (!employee_name || !username) {
+    return res.status(400).json({
+      message: 'employee_name and username are required.',
+    });
+  }
+
+  try {
+    let query: string;
+    let params: any[];
+
+    if (password && password.trim() !== '') {
+      query = `
+        UPDATE employee
+        SET employee_name = $1,
+            employee_role = $2,
+            username = $3,
+            password = $4
+        WHERE employee_id = $5
+        RETURNING employee_id, employee_name, employee_role, username
+      `;
+      params = [employee_name, employee_role, username, password, id];
+    } else {
+      query = `
+        UPDATE employee
+        SET employee_name = $1,
+            employee_role = $2,
+            username = $3
+        WHERE employee_id = $4
+        RETURNING employee_id, employee_name, employee_role, username
+      `;
+      params = [employee_name, employee_role, username, id];
+    }
+
+    const result = await pool.query(query, params);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: 'Employee not found.' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error updating employee:', err);
+    res.status(500).json({ message: 'Failed to update employee.' });
+  }
+});
+
+app.delete('/api/employees/:id', async (req, res) => {
+  const id = Number(req.params.id);
+
+  try {
+    const result = await pool.query(
+      `DELETE FROM employee WHERE employee_id = $1`,
+      [id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: 'Employee not found.' });
+    }
+
+    res.status(204).send();
+  } catch (err) {
+    console.error('Error deleting employee:', err);
+    res.status(500).json({ message: 'Failed to delete employee.' });
   }
 });
 

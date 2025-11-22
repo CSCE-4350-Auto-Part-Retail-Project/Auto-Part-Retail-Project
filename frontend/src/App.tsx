@@ -4,6 +4,7 @@ import { ProductGrid } from './components/ProductGrid';
 import { Cart } from './components/Cart';
 import { ShoppingCart } from 'lucide-react';
 import { Button } from './components/ui/button';
+import ManageEmployees from './components/ManageEmployees';
 
 export interface AutoPart {
   part_number: number;
@@ -43,7 +44,9 @@ export default function App() {
   const [shippingAddress, setShippingAddress] = useState('');
   const [ownedCar, setOwnedCar] = useState('');
 
-
+  const [employeeSection, setEmployeeSection] = useState<
+    'employees' | 'parts' | 'orders' | 'reports' | 'delivery'
+  >('employees');
 
   useEffect(() => {
     const saved = localStorage.getItem('session');
@@ -107,63 +110,63 @@ export default function App() {
     }
   };
 
-const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
+  const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
-  if (
-    !username.trim() ||
-    !password.trim() ||
-    !customerName.trim() ||
-    !creditCardNumber.trim() ||
-    !billingAddress.trim() ||
-    !shippingAddress.trim() ||
-    !preferredBranch.trim()
-  ) {
-    setLoginError('Please fill in all required fields.');
-    return;
-  }
-
-  setLoginError(null);
-
-  try {
-    const response = await fetch(`${API_BASE}/api/customers`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username,
-        password,
-        customer_name: customerName,
-        credit_card_number: creditCardNumber,
-        billing_address: billingAddress,
-        shipping_address: shippingAddress,
-        preferred_branch: preferredBranch,
-        owned_car: ownedCar || null,
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      const message = data?.message || 'Failed to create account.';
-      throw new Error(message);
+    if (
+      !username.trim() ||
+      !password.trim() ||
+      !customerName.trim() ||
+      !creditCardNumber.trim() ||
+      !billingAddress.trim() ||
+      !shippingAddress.trim() ||
+      !preferredBranch.trim()
+    ) {
+      setLoginError('Please fill in all required fields.');
+      return;
     }
 
-    setIsLoggedIn(true);
-    setIsEmployee(false);
-    setUsername(data.username);
-    setPassword('');
-    localStorage.setItem(
-      'session',
-      JSON.stringify({
-        username: data.username,
-        role: 'customer',
-      })
-    );
-  } catch (err: any) {
-    console.error('Registration failed:', err);
-    setLoginError(err.message || 'Registration failed. Please try again.');
-  }
-};
+    setLoginError(null);
+
+    try {
+      const response = await fetch(`${API_BASE}/api/customers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username,
+          password,
+          customer_name: customerName,
+          credit_card_number: creditCardNumber,
+          billing_address: billingAddress,
+          shipping_address: shippingAddress,
+          preferred_branch: preferredBranch,
+          owned_car: ownedCar || null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const message = data?.message || 'Failed to create account.';
+        throw new Error(message);
+      }
+
+      setIsLoggedIn(true);
+      setIsEmployee(false);
+      setUsername(data.username);
+      setPassword('');
+      localStorage.setItem(
+        'session',
+        JSON.stringify({
+          username: data.username,
+          role: 'customer',
+        })
+      );
+    } catch (err: any) {
+      console.error('Registration failed:', err);
+      setLoginError(err.message || 'Registration failed. Please try again.');
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('session');
@@ -383,70 +386,69 @@ const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
               />
             </div>
 
-          {!isEmployeeLogin && isRegistering && (
-            <>
-              <div>
-                <input
-                  type="text"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full rounded-md bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
-                  placeholder="Full Name"
-                />
-              </div>
+            {!isEmployeeLogin && isRegistering && (
+              <>
+                <div>
+                  <input
+                    type="text"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    className="w-full rounded-md bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
+                    placeholder="Full Name"
+                  />
+                </div>
 
-              <div>
-                <input
-                  type="text"
-                  value={creditCardNumber}
-                  onChange={(e) => setCreditCardNumber(e.target.value)}
-                  className="w-full rounded-md bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
-                  placeholder="Credit Card Number"
-                />
-              </div>
+                <div>
+                  <input
+                    type="text"
+                    value={creditCardNumber}
+                    onChange={(e) => setCreditCardNumber(e.target.value)}
+                    className="w-full rounded-md bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
+                    placeholder="Credit Card Number"
+                  />
+                </div>
 
-              <div>
-                <input
-                  type="text"
-                  value={billingAddress}
-                  onChange={(e) => setBillingAddress(e.target.value)}
-                  className="w-full rounded-md bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
-                  placeholder="Billing Address"
-                />
-              </div>
+                <div>
+                  <input
+                    type="text"
+                    value={billingAddress}
+                    onChange={(e) => setBillingAddress(e.target.value)}
+                    className="w-full rounded-md bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
+                    placeholder="Billing Address"
+                  />
+                </div>
 
-              <div>
-                <input
-                  type="text"
-                  value={shippingAddress}
-                  onChange={(e) => setShippingAddress(e.target.value)}
-                  className="w-full rounded-md bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
-                  placeholder="Shipping Address"
-                />
-              </div>
+                <div>
+                  <input
+                    type="text"
+                    value={shippingAddress}
+                    onChange={(e) => setShippingAddress(e.target.value)}
+                    className="w-full rounded-md bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
+                    placeholder="Shipping Address"
+                  />
+                </div>
 
-              <div>
-                <input
-                  type="text"
-                  value={preferredBranch}
-                  onChange={(e) => setPreferredBranch(e.target.value)}
-                  className="w-full rounded-md bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
-                  placeholder="Preferred Branch"
-                />
-              </div>
+                <div>
+                  <input
+                    type="text"
+                    value={preferredBranch}
+                    onChange={(e) => setPreferredBranch(e.target.value)}
+                    className="w-full rounded-md bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
+                    placeholder="Preferred Branch"
+                  />
+                </div>
 
-              <div>
-                <input
-                  type="text"
-                  value={ownedCar}
-                  onChange={(e) => setOwnedCar(e.target.value)}
-                  className="w-full rounded-md bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
-                  placeholder="Owned Car (optional)"
-                />
-              </div>
-            </>
-          )}
-
+                <div>
+                  <input
+                    type="text"
+                    value={ownedCar}
+                    onChange={(e) => setOwnedCar(e.target.value)}
+                    className="w-full rounded-md bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
+                    placeholder="Owned Car (optional)"
+                  />
+                </div>
+              </>
+            )}
 
             {!isRegistering && (
               <div className="flex items-center gap-2">
@@ -471,20 +473,20 @@ const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
             )}
 
             <div className="flex justify-center pt-2">
-             <Button
-              type="submit"
-              className="px-4 py-2 text-sm"
-              disabled={
-                loggingIn ||
-                !username.trim() ||
-                !password.trim() ||
-                (isRegistering &&
-                  (!customerName.trim() ||
-                    !creditCardNumber.trim() ||
-                    !billingAddress.trim() ||
-                    !shippingAddress.trim() ||
-                    !preferredBranch.trim()))
-              }
+              <Button
+                type="submit"
+                className="px-4 py-2 text-sm"
+                disabled={
+                  loggingIn ||
+                  !username.trim() ||
+                  !password.trim() ||
+                  (isRegistering &&
+                    (!customerName.trim() ||
+                      !creditCardNumber.trim() ||
+                      !billingAddress.trim() ||
+                      !shippingAddress.trim() ||
+                      !preferredBranch.trim()))
+                }
               >
                 {isRegistering
                   ? 'Create Account'
@@ -512,6 +514,124 @@ const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
     );
   }
 
+  if (isEmployee) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="container mx-auto px-4 py-8">
+          <header className="mb-8 flex items-center justify-between">
+            <div className="flex flex-col">
+              <span className="text-sm text-slate-700">Employee Dashboard</span>
+              <span className="text-xs text-slate-500">{username}</span>
+            </div>
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+              Log out
+            </Button>
+          </header>
+
+          <div className="flex gap-6">
+            <aside className="w-64 bg-white border border-slate-200 rounded-xl shadow-sm p-4">
+              <p className="text-xs font-semibold text-slate-500 mb-3">
+                Sections
+              </p>
+              <div className="flex flex-col gap-2">
+                <Button
+                  variant={
+                    employeeSection === 'employees' ? 'default' : 'outline'
+                  }
+                  size="sm"
+                  onClick={() => setEmployeeSection('employees')}
+                >
+                  Manage Employees
+                </Button>
+                <Button
+                  variant={employeeSection === 'parts' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setEmployeeSection('parts')}
+                >
+                  Manage Parts
+                </Button>
+                <Button
+                  variant={employeeSection === 'orders' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setEmployeeSection('orders')}
+                >
+                  Manage Orders
+                </Button>
+                <Button
+                  variant={employeeSection === 'reports' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setEmployeeSection('reports')}
+                >
+                  Reports
+                </Button>
+                <Button
+                  variant={
+                    employeeSection === 'delivery' ? 'default' : 'outline'
+                  }
+                  size="sm"
+                  onClick={() => setEmployeeSection('delivery')}
+                >
+                  Delivery Management
+                </Button>
+              </div>
+            </aside>
+
+            <main className="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm p-6">
+              {employeeSection === 'employees' && <ManageEmployees />}
+
+              {employeeSection === 'parts' && (
+                <div>
+                  <h2 className="text-xl font-semibold text-slate-900 mb-2">
+                    Manage Parts
+                  </h2>
+                  <p className="text-sm text-slate-600">
+                    Here you will be able to manage inventory: add, edit, and
+                    delete parts.
+                  </p>
+                </div>
+              )}
+
+              {employeeSection === 'orders' && (
+                <div>
+                  <h2 className="text-xl font-semibold text-slate-900 mb-2">
+                    Manage Orders
+                  </h2>
+                  <p className="text-sm text-slate-600">
+                    Here you will be able to order new parts, reorder, stop
+                    orders, and handle returns.
+                  </p>
+                </div>
+              )}
+
+              {employeeSection === 'reports' && (
+                <div>
+                  <h2 className="text-xl font-semibold text-slate-900 mb-2">
+                    Reports
+                  </h2>
+                  <p className="text-sm text-slate-600">
+                    Here you will be able to generate daily, weekly, and monthly
+                    reports.
+                  </p>
+                </div>
+              )}
+
+              {employeeSection === 'delivery' && (
+                <div>
+                  <h2 className="text-xl font-semibold text-slate-900 mb-2">
+                    Delivery Management
+                  </h2>
+                  <p className="text-sm text-slate-600">
+                    Here you will be able to track order dates, delivery dates,
+                    payment methods, and cancellations.
+                  </p>
+                </div>
+              )}
+            </main>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
