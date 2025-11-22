@@ -5,7 +5,8 @@ import {
   QueryForPart,
   QueryAllParts,
   findCustomerByCredentials,
-  findEmployeeByCredentials
+  findEmployeeByCredentials,
+  createCustomer
 } from './queries';
 
 const app = express();
@@ -48,6 +49,60 @@ app.post('/api/login', async (req, res) => {
     res.status(500).json({ message: 'Server error.' });
   }
 });
+
+// Customer registration route
+app.post('/api/customers', async (req, res) => {
+  const {
+    username,
+    password,
+    customer_name,
+    credit_card_number,
+    billing_address,
+    shipping_address,
+    preferred_branch,
+    owned_car,
+  } = req.body;
+
+  if (
+    !username ||
+    !password ||
+    !customer_name ||
+    !credit_card_number ||
+    !billing_address ||
+    !shipping_address ||
+    !preferred_branch
+  ) {
+    return res.status(400).json({ message: 'All fields are required.' });
+  }
+
+  try {
+    const newCustomer = await createCustomer({
+      username,
+      password,
+      customer_name,
+      credit_card_number,
+      billing_address,
+      shipping_address,
+      preferred_branch,
+      owned_car,
+    });
+
+    return res.status(201).json({
+      username: newCustomer.username,
+      displayName: newCustomer.customer_name,
+      role: 'customer',
+    });
+  } catch (err: any) {
+    console.error('Registration error:', err);
+
+    if (err.code === '23505') {
+      return res.status(409).json({ message: 'Username already exists.' });
+    }
+
+    return res.status(500).json({ message: 'Failed to create customer.' });
+  }
+});
+
 
 // API route your React app will hit
 app.get('/api/parts', async (req, res) => {

@@ -8,11 +8,10 @@ export interface AutoPart {
   img_url: string;
 }
 
-
 export async function QueryForPart(searchTerm: string): Promise<AutoPart[]> {
   const client = await pool.connect();
   try {
-    const isNumeric = !isNaN(Number(searchTerm)); // check if searchTerm is a number
+    const isNumeric = !isNaN(Number(searchTerm));
     const query = `
       SELECT
         part_number,
@@ -23,9 +22,7 @@ export async function QueryForPart(searchTerm: string): Promise<AutoPart[]> {
       WHERE part_name ILIKE $1
       ${isNumeric ? 'OR part_number = $2' : ''}
     `;
-
     const params = isNumeric ? [`%${searchTerm}%`, Number(searchTerm)] : [`%${searchTerm}%`];
-
     const result = await client.query(query, params);
     return result.rows;
   } catch (err) {
@@ -36,7 +33,6 @@ export async function QueryForPart(searchTerm: string): Promise<AutoPart[]> {
   }
 }
 
-//query all parts
 export async function QueryAllParts(): Promise<AutoPart[]> {
   const client = await pool.connect();
   try {
@@ -61,7 +57,65 @@ export async function QueryAllParts(): Promise<AutoPart[]> {
   }
 }
 
-// CUSTOMER LOGIN
+export async function createCustomer({
+  username,
+  password,
+  customer_name,
+  credit_card_number,
+  billing_address,
+  shipping_address,
+  preferred_branch,
+  owned_car,
+}: {
+  username: string;
+  password: string;
+  customer_name: string;
+  credit_card_number: string;
+  billing_address: string;
+  shipping_address: string;
+  preferred_branch: string;
+  owned_car?: string;
+}) {
+  const result = await pool.query(
+    `INSERT INTO customers (
+       username,
+       credit_card_number,
+       billing_address,
+       shipping_address,
+       customer_name,
+       password,
+       preferred_branch${owned_car ? ', owned_car' : ''}
+     )
+     VALUES (
+       $1, $2, $3, $4, $5, $6, $7${owned_car ? ', $8' : ''}
+     )
+     RETURNING username, customer_name, preferred_branch`,
+    owned_car
+      ? [
+          username,
+          credit_card_number,
+          billing_address,
+          shipping_address,
+          customer_name,
+          password,
+          preferred_branch,
+          owned_car,
+        ]
+      : [
+          username,
+          credit_card_number,
+          billing_address,
+          shipping_address,
+          customer_name,
+          password,
+          preferred_branch,
+        ]
+  );
+
+  return result.rows[0];
+}
+
+
 export async function findCustomerByCredentials(
   username: string,
   password: string
@@ -76,7 +130,6 @@ export async function findCustomerByCredentials(
   return result.rows[0] || null;
 }
 
-// EMPLOYEE LOGIN
 export async function findEmployeeByCredentials(
   username: string,
   password: string

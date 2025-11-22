@@ -34,6 +34,17 @@ export default function App() {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [loggingIn, setLoggingIn] = useState(false);
 
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [customerName, setCustomerName] = useState('');
+  const [address, setAddress] = useState('');
+  const [preferredBranch, setPreferredBranch] = useState('');
+  const [creditCardNumber, setCreditCardNumber] = useState('');
+  const [billingAddress, setBillingAddress] = useState('');
+  const [shippingAddress, setShippingAddress] = useState('');
+  const [ownedCar, setOwnedCar] = useState('');
+
+
+
   useEffect(() => {
     const saved = localStorage.getItem('session');
     if (saved) {
@@ -41,6 +52,7 @@ export default function App() {
         const session = JSON.parse(saved);
         setIsLoggedIn(true);
         setUsername(session.username);
+        setIsEmployee(session.role === 'employee');
       } catch (err) {
         console.error('Error restoring session:', err);
       }
@@ -94,6 +106,64 @@ export default function App() {
       setLoggingIn(false);
     }
   };
+
+const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+
+  if (
+    !username.trim() ||
+    !password.trim() ||
+    !customerName.trim() ||
+    !creditCardNumber.trim() ||
+    !billingAddress.trim() ||
+    !shippingAddress.trim() ||
+    !preferredBranch.trim()
+  ) {
+    setLoginError('Please fill in all required fields.');
+    return;
+  }
+
+  setLoginError(null);
+
+  try {
+    const response = await fetch(`${API_BASE}/api/customers`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username,
+        password,
+        customer_name: customerName,
+        credit_card_number: creditCardNumber,
+        billing_address: billingAddress,
+        shipping_address: shippingAddress,
+        preferred_branch: preferredBranch,
+        owned_car: ownedCar || null,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      const message = data?.message || 'Failed to create account.';
+      throw new Error(message);
+    }
+
+    setIsLoggedIn(true);
+    setIsEmployee(false);
+    setUsername(data.username);
+    setPassword('');
+    localStorage.setItem(
+      'session',
+      JSON.stringify({
+        username: data.username,
+        role: 'customer',
+      })
+    );
+  } catch (err: any) {
+    console.error('Registration failed:', err);
+    setLoginError(err.message || 'Registration failed. Please try again.');
+  }
+};
 
   const handleLogout = () => {
     localStorage.removeItem('session');
@@ -286,10 +356,13 @@ export default function App() {
             Auto Parts System
           </h1>
           <p className="text-center text-slate-400 mb-8">
-            Log in to continue
+            {isRegistering ? 'Create an account' : 'Log in to continue'}
           </p>
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form
+            onSubmit={isRegistering ? handleRegister : handleLogin}
+            className="space-y-4"
+          >
             <div>
               <input
                 type="text"
@@ -310,37 +383,135 @@ export default function App() {
               />
             </div>
 
-            <div className="flex items-center gap-2">
-              <input
-                id="employeeLogin"
-                type="checkbox"
-                checked={isEmployeeLogin}
-                onChange={(e) => setIsEmployeeLogin(e.target.checked)}
-                className="h-4 w-4"
-              />
-              <label htmlFor="employeeLogin" className="text-sm text-slate-300">
-                Employee login
-              </label>
-            </div>
+          {!isEmployeeLogin && isRegistering && (
+            <>
+              <div>
+                <input
+                  type="text"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className="w-full rounded-md bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
+                  placeholder="Full Name"
+                />
+              </div>
+
+              <div>
+                <input
+                  type="text"
+                  value={creditCardNumber}
+                  onChange={(e) => setCreditCardNumber(e.target.value)}
+                  className="w-full rounded-md bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
+                  placeholder="Credit Card Number"
+                />
+              </div>
+
+              <div>
+                <input
+                  type="text"
+                  value={billingAddress}
+                  onChange={(e) => setBillingAddress(e.target.value)}
+                  className="w-full rounded-md bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
+                  placeholder="Billing Address"
+                />
+              </div>
+
+              <div>
+                <input
+                  type="text"
+                  value={shippingAddress}
+                  onChange={(e) => setShippingAddress(e.target.value)}
+                  className="w-full rounded-md bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
+                  placeholder="Shipping Address"
+                />
+              </div>
+
+              <div>
+                <input
+                  type="text"
+                  value={preferredBranch}
+                  onChange={(e) => setPreferredBranch(e.target.value)}
+                  className="w-full rounded-md bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
+                  placeholder="Preferred Branch"
+                />
+              </div>
+
+              <div>
+                <input
+                  type="text"
+                  value={ownedCar}
+                  onChange={(e) => setOwnedCar(e.target.value)}
+                  className="w-full rounded-md bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
+                  placeholder="Owned Car (optional)"
+                />
+              </div>
+            </>
+          )}
+
+
+            {!isRegistering && (
+              <div className="flex items-center gap-2">
+                <input
+                  id="employeeLogin"
+                  type="checkbox"
+                  checked={isEmployeeLogin}
+                  onChange={(e) => setIsEmployeeLogin(e.target.checked)}
+                  className="h-4 w-4"
+                />
+                <label
+                  htmlFor="employeeLogin"
+                  className="text-sm text-slate-300"
+                >
+                  Employee login
+                </label>
+              </div>
+            )}
 
             {loginError && (
               <p className="text-sm text-red-400">{loginError}</p>
             )}
 
             <div className="flex justify-center pt-2">
-              <Button
-                type="submit"
-                className="px-4 py-2 text-sm"
-                disabled={loggingIn || !username.trim() || !password.trim()}
+             <Button
+              type="submit"
+              className="px-4 py-2 text-sm"
+              disabled={
+                loggingIn ||
+                !username.trim() ||
+                !password.trim() ||
+                (isRegistering &&
+                  (!customerName.trim() ||
+                    !creditCardNumber.trim() ||
+                    !billingAddress.trim() ||
+                    !shippingAddress.trim() ||
+                    !preferredBranch.trim()))
+              }
               >
-                {loggingIn ? 'Logging in…' : 'Log In'}
+                {isRegistering
+                  ? 'Create Account'
+                  : loggingIn
+                  ? 'Logging in…'
+                  : 'Log In'}
               </Button>
             </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setIsRegistering(!isRegistering);
+                setLoginError(null);
+              }}
+              className="block mx-auto text-slate-400 text-sm pt-2"
+            >
+              {isRegistering
+                ? 'Already have an account? Log in'
+                : 'New user? Create an account'}
+            </button>
           </form>
         </div>
       </div>
     );
   }
+
 
   return (
     <>
