@@ -7,6 +7,7 @@ import {
   findCustomerByCredentials,
   findEmployeeByCredentials,
   createCustomer,
+  makeCustomerOrder,
 } from './queries';
 import pool from './database';
 
@@ -127,6 +128,23 @@ app.get('/api/parts', async (req, res) => {
     res.status(500).json({ error: 'Database query failed' });
   }
 });
+
+app.post('/api/checkout', async (req, res) => {
+  try {
+    const { payment_id, order_id, amount, card_number, date } = req.body;
+
+    if (!payment_id || !order_id || !amount || !card_number || !date) {
+      return res.status(400).json({ error: 'Missing payment data' });
+    }
+
+    const payment = await makeCustomerOrder(payment_id, order_id, amount, card_number, date);
+    res.json({ success: true, payment });
+  } catch (err) {
+    console.error('Error processing payment:', err);
+    res.status(500).json({ error: 'Database insert failed' });
+  }
+});
+
 
 app.get('/api/employees', async (req, res) => {
   try {
