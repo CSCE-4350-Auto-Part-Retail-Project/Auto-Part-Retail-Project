@@ -426,7 +426,64 @@ app.delete('/api/orders/:id', async (req, res) => {
   }
 });
 
-// Start server
+// last 24 hours
+app.get('/api/reports/daily', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        COUNT(DISTINCT o.order_id) AS total_orders,
+        SUM(oi.quantity) AS total_items
+      FROM orders o
+      JOIN order_items oi ON o.order_id = oi.order_id
+      WHERE o.order_date >= NOW() - INTERVAL '1 day'
+    `);
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Daily report error:', err);
+    res.status(500).json({ message: 'Failed to load daily report.' });
+  }
+});
+
+// last 7 days
+app.get('/api/reports/weekly', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        COUNT(DISTINCT o.order_id) AS total_orders,
+        SUM(oi.quantity) AS total_items
+      FROM orders o
+      JOIN order_items oi ON o.order_id = oi.order_id
+      WHERE o.order_date >= NOW() - INTERVAL '7 days'
+    `);
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Weekly report error:', err);
+    res.status(500).json({ message: 'Failed to load weekly report.' });
+  }
+});
+
+// last 30 days
+app.get('/api/reports/monthly', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        COUNT(DISTINCT o.order_id) AS total_orders,
+        SUM(oi.quantity) AS total_items
+      FROM orders o
+      JOIN order_items oi ON o.order_id = oi.order_id
+      WHERE o.order_date >= NOW() - INTERVAL '30 days'
+    `);
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Monthly report error:', err);
+    res.status(500).json({ message: 'Failed to load monthly report.' });
+  }
+});
+
+// start server
 app.listen(3001, () => {
   console.log('API server running on http://localhost:3001');
 });
