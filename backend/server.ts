@@ -241,6 +241,81 @@ app.delete('/api/employees/:id', async (req, res) => {
   }
 });
 
+app.get('/api/parts/manage', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT part_id, part_number, part_name, price, img_url
+      FROM parts
+      ORDER BY part_id;
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error loading parts:', err);
+    res.status(500).json({ message: 'Failed to load parts.' });
+  }
+});
+
+// CREATE part
+app.post('/api/parts/manage', async (req, res) => {
+  const { part_number, part_name, price, img_url } = req.body;
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO parts (part_number, part_name, price, img_url)
+       VALUES ($1, $2, $3, $4)
+       RETURNING part_id, part_number, part_name, price, img_url`,
+      [part_number, part_name, price, img_url]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (err: any) {
+    console.error('Error creating part:', err);
+
+    if (err.code === '23505') {
+      return res.status(400).json({ message: 'Part number already exists.' });
+    }
+
+    res.status(500).json({ message: 'Failed to create part.' });
+  }
+});
+
+// UPDATE part
+app.put('/api/parts/manage/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  const { part_number, part_name, price, img_url } = req.body;
+
+  try {
+    const result = await pool.query(
+      `UPDATE parts
+       SET part_number = $1,
+           part_name = $2,
+           price = $3,
+           img_url = $4
+       WHERE part_id = $5
+       RETURNING part_id, part_number, part_name, price, img_url`,
+      [part_number, part_name, price, img_url, id]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error updating part:', err);
+    res.status(500).json({ message: 'Failed to update part.' });
+  }
+});
+
+// DELETE part
+app.delete('/api/parts/manage/:id', async (req, res) => {
+  const id = Number(req.params.id);
+
+  try {
+    await pool.query(`DELETE FROM parts WHERE part_id = $1`, [id]);
+    res.status(204).send();
+  } catch (err) {
+    console.error('Error deleting part:', err);
+    res.status(500).json({ message: 'Failed to delete part.' });
+  }
+});
+
 // Start server
 app.listen(3001, () => {
   console.log('API server running on http://localhost:3001');

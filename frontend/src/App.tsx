@@ -5,6 +5,9 @@ import { Cart } from './components/Cart';
 import { ShoppingCart } from 'lucide-react';
 import { Button } from './components/ui/button';
 import ManageEmployees from './components/ManageEmployees';
+import ManageParts from './components/ManageParts';
+
+
 
 export interface AutoPart {
   part_number: number;
@@ -579,17 +582,7 @@ export default function App() {
             <main className="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm p-6">
               {employeeSection === 'employees' && <ManageEmployees />}
 
-              {employeeSection === 'parts' && (
-                <div>
-                  <h2 className="text-xl font-semibold text-slate-900 mb-2">
-                    Manage Parts
-                  </h2>
-                  <p className="text-sm text-slate-600">
-                    Here you will be able to manage inventory: add, edit, and
-                    delete parts.
-                  </p>
-                </div>
-              )}
+              {employeeSection === 'parts' && <ManageParts />}
 
               {employeeSection === 'orders' && (
                 <div>
