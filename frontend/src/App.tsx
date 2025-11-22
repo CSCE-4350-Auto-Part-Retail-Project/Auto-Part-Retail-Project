@@ -6,6 +6,8 @@ import { ShoppingCart } from 'lucide-react';
 import { Button } from './components/ui/button';
 import ManageEmployees from './components/ManageEmployees';
 import ManageParts from './components/ManageParts';
+import ManageOrders from './components/ManageOrders';
+
 
 
 
@@ -584,17 +586,7 @@ export default function App() {
 
               {employeeSection === 'parts' && <ManageParts />}
 
-              {employeeSection === 'orders' && (
-                <div>
-                  <h2 className="text-xl font-semibold text-slate-900 mb-2">
-                    Manage Orders
-                  </h2>
-                  <p className="text-sm text-slate-600">
-                    Here you will be able to order new parts, reorder, stop
-                    orders, and handle returns.
-                  </p>
-                </div>
-              )}
+              {employeeSection === 'orders' && <ManageOrders />}
 
               {employeeSection === 'reports' && (
                 <div>

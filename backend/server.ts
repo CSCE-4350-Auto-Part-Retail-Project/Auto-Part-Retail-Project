@@ -315,6 +315,116 @@ app.delete('/api/parts/manage/:id', async (req, res) => {
     res.status(500).json({ message: 'Failed to delete part.' });
   }
 });
+// GET all orders (one row per order item)
+app.get('/api/orders', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `
+      SELECT 
+        o.order_id,
+        o.customer_name,
+        o.order_date,
+        oi.order_item_id,
+        oi.quantity,
+        p.part_id,
+        p.part_number,
+        p.part_name
+      FROM orders o
+      JOIN order_items oi ON o.order_id = oi.order_id
+      JOIN parts p ON oi.part_id = p.part_id
+      ORDER BY o.order_id DESC, oi.order_item_id;
+      `
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error loading orders:', err);
+    res.status(500).json({ message: 'Failed to load orders.' });
+  }
+});
+
+// create a new order
+app.post('/api/orders', async (req, res) => {
+  const { customer_name, part_number, quantity } = req.body;
+
+  if (!customer_name || !part_number || !quantity) {
+    return res.status(400).json({
+      message: 'customer_name, part_number, and quantity are required.',
+    });
+  }
+
+  try {
+    // look up part by part_number
+    const partResult = await pool.query(
+      `SELECT part_id FROM parts WHERE part_number = $1`,
+      [part_number]
+    );
+
+    if (partResult.rowCount === 0) {
+      return res.status(400).json({ message: 'Part not found for that number.' });
+    }
+
+    const part = partResult.rows[0];
+
+    // create order
+    const orderResult = await pool.query(
+      `
+      INSERT INTO orders (customer_name)
+      VALUES ($1)
+      RETURNING order_id, customer_name, order_date
+      `,
+      [customer_name]
+    );
+
+    const order = orderResult.rows[0];
+
+    // create order_item
+    const itemResult = await pool.query(
+      `
+      INSERT INTO order_items (order_id, part_id, quantity)
+      VALUES ($1, $2, $3)
+      RETURNING order_item_id, quantity
+      `,
+      [order.order_id, part.part_id, quantity]
+    );
+
+    const item = itemResult.rows[0];
+
+    res.status(201).json({
+      order_id: order.order_id,
+      customer_name: order.customer_name,
+      order_date: order.order_date,
+      order_item_id: item.order_item_id,
+      quantity: item.quantity,
+      part_id: part.part_id,
+      part_number,
+    });
+  } catch (err) {
+    console.error('Error creating order:', err);
+    res.status(500).json({ message: 'Failed to create order.' });
+  }
+});
+
+// delete an order
+app.delete('/api/orders/:id', async (req, res) => {
+  const id = Number(req.params.id);
+
+  try {
+    const result = await pool.query(
+      `DELETE FROM orders WHERE order_id = $1`,
+      [id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: 'Order not found.' });
+    }
+
+    res.status(204).send();
+  } catch (err) {
+    console.error('Error deleting order:', err);
+    res.status(500).json({ message: 'Failed to delete order.' });
+  }
+});
 
 // Start server
 app.listen(3001, () => {
