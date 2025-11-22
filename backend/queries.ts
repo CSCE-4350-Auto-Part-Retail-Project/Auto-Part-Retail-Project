@@ -143,3 +143,20 @@ export async function findEmployeeByCredentials(
 
   return result.rows[0] || null;
 }
+
+export async function makeCustomerOrder(
+  payment_id: number,
+  order_id: number,
+  amount: number,
+  card_number: string,
+  date: string
+) {
+
+  const result = await pool.query(
+    `INSERT INTO payments(payment_id, order_id, amount, card_number, date)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [payment_id, order_id, amount, card_number, date]
+  );
+
+  return result.rows[0] || null;
+}
