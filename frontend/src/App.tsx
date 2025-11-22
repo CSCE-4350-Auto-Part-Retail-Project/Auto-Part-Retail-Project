@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { SearchBar } from './components/SearchBar';
 import { ProductGrid } from './components/ProductGrid';
 import { Cart } from './components/Cart';
@@ -26,10 +26,94 @@ export default function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCatalogueOpen, setIsCatalogueOpen] = useState(false);
 
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [isEmployeeLogin, setIsEmployeeLogin] = useState(false);
+  const [isEmployee, setIsEmployee] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [loggingIn, setLoggingIn] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('session');
+    if (saved) {
+      try {
+        const session = JSON.parse(saved);
+        setIsLoggedIn(true);
+        setUsername(session.username);
+      } catch (err) {
+        console.error('Error restoring session:', err);
+      }
+    }
+  }, []);
+
+  const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!username.trim() || !password.trim()) return;
+
+    setLoginError(null);
+    setLoggingIn(true);
+
+    try {
+      const response = await fetch(`${API_BASE}/api/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username,
+          password,
+          mode: isEmployeeLogin ? 'employee' : 'customer',
+        }),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => null);
+        const message = errorBody?.message || 'Invalid username or password.';
+        throw new Error(message);
+      }
+
+      const data = await response.json();
+
+      setIsLoggedIn(true);
+      setIsEmployee(data.role === 'employee');
+      setUsername(data.username);
+      setPassword('');
+      localStorage.setItem(
+        'session',
+        JSON.stringify({
+          username: data.username,
+          role: data.role,
+        })
+      );
+    } catch (err: any) {
+      console.error('Login failed:', err);
+      setLoginError(err.message || 'Login failed. Please try again.');
+      setIsLoggedIn(false);
+      setIsEmployee(false);
+    } finally {
+      setLoggingIn(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('session');
+    setIsLoggedIn(false);
+    setUsername('');
+    setPassword('');
+    setIsEmployee(false);
+    setIsEmployeeLogin(false);
+    setParts([]);
+    setCart([]);
+    setError(null);
+    setIsCartOpen(false);
+    setIsCatalogueOpen(false);
+    setLoginError(null);
+  };
+
   const handleSearch = async (searchTerm: string) => {
     setLoading(true);
     setError(null);
-    setIsCatalogueOpen(false); // close catalogue if searching
+    setIsCatalogueOpen(false);
 
     try {
       const response = await fetch(
@@ -46,16 +130,16 @@ export default function App() {
       setParts(data);
     } catch (err) {
       console.error('Error fetching parts:', err);
-      setError('Failed to load auto parts. Showing mock data for demonstration.');
+      setError(
+        'Failed to load auto parts. Showing mock data for demonstration.'
+      );
       loadMockData(searchTerm);
     } finally {
       setLoading(false);
     }
   };
 
-  // Catalogue toggle
   const handleCatalogue = async () => {
-    // If catalogue is already open, close it and clear results
     if (isCatalogueOpen) {
       setIsCatalogueOpen(false);
       setParts([]);
@@ -88,18 +172,68 @@ export default function App() {
 
   const loadMockData = (searchTerm: string) => {
     const mockParts: AutoPart[] = [
-      { part_number: 1, part_name: 'Brake Pad Set', price: 89.99, img_url: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=400&h=400&fit=crop' },
-      { part_number: 2, part_name: 'Oil Filter', price: 24.99, img_url: 'https://images.unsplash.com/photo-1625047509168-a7026f36de04?w=400&h=400&fit=crop' },
-      { part_number: 3, part_name: 'Air Filter', price: 34.99, img_url: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400&h=400&fit=crop' },
-      { part_number: 4, part_name: 'Spark Plugs', price: 45.99, img_url: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=400&h=400&fit=crop' },
-      { part_number: 5, part_name: 'Battery', price: 159.99, img_url: 'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=400&h=400&fit=crop' },
-      { part_number: 6, part_name: 'Alternator', price: 249.99, img_url: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=400&h=400&fit=crop' },
-      { part_number: 7, part_name: 'Radiator', price: 199.99, img_url: 'https://images.unsplash.com/photo-1627074476370-c0e0f2229d2e?w=400&h=400&fit=crop' },
-      { part_number: 8, part_name: 'Shock Absorbers', price: 129.99, img_url: 'https://images.unsplash.com/photo-1449130015084-2fe954b75e4d?w=400&h=400&fit=crop' },
+      {
+        part_number: 1,
+        part_name: 'Brake Pad Set',
+        price: 89.99,
+        img_url:
+          'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=400&h=400&fit=crop',
+      },
+      {
+        part_number: 2,
+        part_name: 'Oil Filter',
+        price: 24.99,
+        img_url:
+          'https://images.unsplash.com/photo-1625047509168-a7026f36de04?w=400&h=400&fit=crop',
+      },
+      {
+        part_number: 3,
+        part_name: 'Air Filter',
+        price: 34.99,
+        img_url:
+          'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400&h=400&fit=crop',
+      },
+      {
+        part_number: 4,
+        part_name: 'Spark Plugs',
+        price: 45.99,
+        img_url:
+          'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=400&h=400&fit=crop',
+      },
+      {
+        part_number: 5,
+        part_name: 'Battery',
+        price: 159.99,
+        img_url:
+          'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=400&h=400&fit=crop',
+      },
+      {
+        part_number: 6,
+        part_name: 'Alternator',
+        price: 249.99,
+        img_url:
+          'https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=400&h=400&fit=crop',
+      },
+      {
+        part_number: 7,
+        part_name: 'Radiator',
+        price: 199.99,
+        img_url:
+          'https://images.unsplash.com/photo-1627074476370-c0e0f2229d2e?w=400&h=400&fit=crop',
+      },
+      {
+        part_number: 8,
+        part_name: 'Shock Absorbers',
+        price: 129.99,
+        img_url:
+          'https://images.unsplash.com/photo-1449130015084-2fe954b75e4d?w=400&h=400&fit=crop',
+      },
     ];
 
     const filtered = searchTerm
-      ? mockParts.filter((p) => p.part_name.toLowerCase().includes(searchTerm.toLowerCase()))
+      ? mockParts.filter((p) =>
+          p.part_name.toLowerCase().includes(searchTerm.toLowerCase())
+        )
       : mockParts;
 
     setParts(filtered);
@@ -107,8 +241,10 @@ export default function App() {
 
   const addToCart = (part: AutoPart) => {
     setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.part_number === part.part_number);
-      
+      const existingItem = prevCart.find(
+        (item) => item.part_number === part.part_number
+      );
+
       if (existingItem) {
         return prevCart.map((item) =>
           item.part_number === part.part_number
@@ -116,13 +252,15 @@ export default function App() {
             : item
         );
       }
-      
+
       return [...prevCart, { ...part, quantity: 1 }];
     });
   };
 
   const removeFromCart = (partId: number) => {
-    setCart((prevCart) => prevCart.filter((item) => item.part_number !== partId));
+    setCart((prevCart) =>
+      prevCart.filter((item) => item.part_number !== partId)
+    );
   };
 
   const updateQuantity = (partId: number, quantity: number) => {
@@ -130,7 +268,7 @@ export default function App() {
       removeFromCart(partId);
       return;
     }
-    
+
     setCart((prevCart) =>
       prevCart.map((item) =>
         item.part_number === partId ? { ...item, quantity } : item
@@ -140,21 +278,92 @@ export default function App() {
 
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center px-4">
+        <div className="w-full max-w-3xl bg-slate-900/80 border border-slate-700 rounded-2xl p-8 shadow-xl">
+          <h1 className="text-2xl font-semibold text-center text-slate-50 mb-2">
+            Auto Parts System
+          </h1>
+          <p className="text-center text-slate-400 mb-8">
+            Log in to continue
+          </p>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full rounded-md bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
+                placeholder="Username"
+              />
+            </div>
+
+            <div>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-md bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100"
+                placeholder="Password"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                id="employeeLogin"
+                type="checkbox"
+                checked={isEmployeeLogin}
+                onChange={(e) => setIsEmployeeLogin(e.target.checked)}
+                className="h-4 w-4"
+              />
+              <label htmlFor="employeeLogin" className="text-sm text-slate-300">
+                Employee login
+              </label>
+            </div>
+
+            {loginError && (
+              <p className="text-sm text-red-400">{loginError}</p>
+            )}
+
+            <div className="flex justify-center pt-2">
+              <Button
+                type="submit"
+                className="px-4 py-2 text-sm"
+                disabled={loggingIn || !username.trim() || !password.trim()}
+              >
+                {loggingIn ? 'Logging in…' : 'Log In'}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
         <div className="container mx-auto px-4 py-8">
-          <header className="mb-12 text-center">
+          <header className="mb-12">
             <div className="flex items-center justify-between mb-2">
-              <div className="flex-1"></div>
-              <h1 className="flex-1 text-slate-900">Auto Parts Search</h1>
-              <div className="flex-1 flex justify-end">
+              <div className="flex flex-col">
+                <span className="text-sm text-slate-700">
+                  Logged in as {isEmployee ? 'Employee' : 'Customer'}
+                </span>
+                <span className="text-xs text-slate-500">{username}</span>
+              </div>
+
+              <h1 className="text-slate-900 text-center flex-1">
+                Auto Parts Search
+              </h1>
+
+              <div className="flex items-center gap-3">
                 <Button
                   variant="outline"
                   size="lg"
-                  onClick={() => {
-                    setIsCartOpen(true);
-                  }}
+                  onClick={() => setIsCartOpen(true)}
                   className="relative"
                 >
                   <ShoppingCart className="size-5" />
@@ -164,17 +373,22 @@ export default function App() {
                     </span>
                   )}
                 </Button>
+
+                <Button variant="outline" size="sm" onClick={handleLogout}>
+                  Log out
+                </Button>
               </div>
             </div>
-            <p className="text-slate-600">Search for auto parts and add them to your order</p>
+
+            <p className="text-slate-600 text-center">
+              Search for auto parts and add them to your order
+            </p>
           </header>
 
-          {/* Search and Catalogue row */}
           <div className="max-w-2xl mx-auto mb-4">
             <SearchBar onSearch={handleSearch} loading={loading} />
           </div>
 
-          {/* Catalogue button row */}
           <div className="flex justify-center mb-8">
             <Button
               variant="outline"
@@ -190,14 +404,20 @@ export default function App() {
           {error && (
             <div className="mx-auto mb-8 max-w-2xl rounded-lg bg-yellow-50 border border-yellow-200 p-4">
               <p className="text-yellow-800">{error}</p>
-              <p className="text-yellow-700 mt-2">Showing mock data for demonstration.</p>
+              <p className="text-yellow-700 mt-2">
+                Showing mock data for demonstration.
+              </p>
             </div>
           )}
 
-          <ProductGrid parts={parts} loading={loading} onAddToCart={addToCart} />
+          <ProductGrid
+            parts={parts}
+            loading={loading}
+            onAddToCart={addToCart}
+          />
         </div>
       </div>
-      
+
       {isCartOpen && (
         <Cart
           items={cart}

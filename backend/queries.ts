@@ -60,3 +60,33 @@ export async function QueryAllParts(): Promise<AutoPart[]> {
     client.release();
   }
 }
+
+// CUSTOMER LOGIN
+export async function findCustomerByCredentials(
+  username: string,
+  password: string
+) {
+  const result = await pool.query(
+    `SELECT username, customer_name
+     FROM customers
+     WHERE username = $1 AND password = $2`,
+    [username, password]
+  );
+
+  return result.rows[0] || null;
+}
+
+// EMPLOYEE LOGIN
+export async function findEmployeeByCredentials(
+  username: string,
+  password: string
+) {
+  const result = await pool.query(
+    `SELECT employee_id, username, employee_name, employee_role
+     FROM employee
+     WHERE username = $1 AND password = $2`,
+    [username, password]
+  );
+
+  return result.rows[0] || null;
+}
